@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SJF Scheduling - Manufacturing System</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f8;
+    color: #222;
+}
+
+.header {
+    background: #2c3e50;
+    color: white;
+    text-align: center;
+    padding-block: 20px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 26px;
+}
+
+.header p {
+    margin: 6px 0 0;
+    color: #cfd8dc;
+}
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.box {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    color: #2c3e50;
+}
+
+h3 {
+    font-size: 16px;
+    margin: 18px 0 8px;
+}
+
+.form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+}
+
+input {
+    width: 150px;
+    padding: 7px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #222;
+    background: white;
+}
+
+button {
+    background: #2980b9;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1f6391;
+}
+
+button.grey {
+    background: #7f8c8d;
+}
+
+button.grey:hover {
+    background: #636e72;
+}
+
+button.active {
+    background: #27ae60;
+}
+
+button.del {
+    background: #e74c3c;
+    padding: 4px 10px;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#msg {
+    color: #c0392b;
+    font-size: 14px;
+    min-height: 20px;
+    margin: 8px 0;
+}
+
+.note {
+    font-size: 13px;
+    color: #666;
+    margin: 10px 0 0;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 7px 10px;
+    text-align: center;
+}
+
+th {
+    background: #ecf0f1;
+}
+
+.gantt-wrap {
+    overflow-x: auto;
+}
+
+.gantt {
+    display: flex;
+    min-width: 480px;
+}
+
+.g-box {
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-weight: bold;
+    font-size: 14px;
+    border-right: 2px solid white;
+}
+
+.g-box.idle {
+    background: #bdc3c7;
+    color: #333;
+}
+
+.g-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding-top: 3px;
+}
+
+.avg {
+    margin-top: 12px;
+    line-height: 1.8;
+}
+
+.good {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.footer {
+    text-align: center;
+    color: #777;
+    font-size: 13px;
+    padding-bottom: 30px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>SJF Scheduling - Manufacturing System</h1>
+    <p>SPOS Mini Project | Shortest Job First (Non Preemptive)</p>
+</div>
+
+<div class="container">
+
+    <div class="box">
+        <h2>Add Task</h2>
+        <form class="form" id="taskForm" novalidate>
+            <label>Task Name
+                <input type="text" id="name" placeholder="eg. Welding" maxlength="15">
+            </label>
+            <label>Arrival Time
+                <input type="number" id="at" min="0" placeholder="eg. 0">
+            </label>
+            <label>Processing Time
+                <input type="number" id="bt" min="1" placeholder="eg. 5">
+            </label>
+            <button type="submit">Add Task</button>
+        </form>
+        <p id="msg"></p>
+        <div class="buttons">
+            <button class="grey" id="sampleBtn" type="button">Load Sample</button>
+            <button class="grey" id="clearBtn" type="button">Clear All</button>
+        </div>
+        <p class="note">Arrival time = when the task comes to the machine. Processing time = how long the machine takes to finish it (in minutes).</p>
+    </div>
+
+    <div class="box">
+        <h2>Task List</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Task</th><th>Name</th><th>Arrival Time</th><th>Processing Time</th><th>Delete</th></tr>
+                </thead>
+                <tbody id="taskBody"></tbody>
+            </table>
+        </div>
+        <div class="buttons" style="margin-top: 14px;">
+            <button id="sjfBtn" type="button">Run SJF</button>
+            <button id="fcfsBtn" type="button">Run FCFS</button>
+        </div>
+    </div>
+
+    <div class="box" id="output">
+        <h2 id="outTitle">SJF Result</h2>
+
+        <h3>Gantt Chart</h3>
+        <div class="gantt-wrap">
+            <div class="gantt" id="gantt"></div>
+        </div>
+
+        <h3>Result Table</h3>
+        <div class="table-wrap" id="result"></div>
+        <div class="avg" id="avg"></div>
+    </div>
+
+    <div class="box" id="compareBox">
+        <h2>SJF vs FCFS</h2>
+        <div class="table-wrap" id="compare"></div>
+    </div>
+
+</div>
+
+<div class="footer">SPOS Lab Mini Project - Manufacturing System using SJF</div>
+
+<script>
+// list of tasks entered by user
+var tasks = [];
+var current = "sjf";
+var colors = ["#3498db", "#e67e22", "#9b59b6", "#27ae60", "#e74c3c", "#16a085", "#d35400", "#8e44ad"];
+
+function safe(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function loadSample() {
+    tasks = [
+        { name: "Cutting", at: 0, bt: 8 },
+        { name: "Drilling", at: 1, bt: 4 },
+        { name: "Welding", at: 2, bt: 9 },
+        { name: "Painting", at: 3, bt: 5 },
+        { name: "Packing", at: 4, bt: 2 }
+    ];
+    document.getElementById("msg").innerText = "";
+    showTasks();
+    run(current);
+}
+
+function addTask() {
+    var name = document.getElementById("name").value.trim();
+    var at = document.getElementById("at").value;
+    var bt = document.getElementById("bt").value;
+    var msg = document.getElementById("msg");
+    msg.innerText = "";
+
+    if (tasks.length >= 20) {
+        msg.innerText = "Maximum 20 tasks allowed";
+        return;
+    }
+    if (name == "") {
+        name = "Task" + (tasks.length + 1);
+    }
+    if (at === "" || Number(at) < 0 || !Number.isInteger(Number(at))) {
+        msg.innerText = "Arrival time should be a whole number (0 or more)";
+        return;
+    }
+    if (bt === "" || Number(bt) <= 0 || !Number.isInteger(Number(bt))) {
+        msg.innerText = "Processing time should be a whole number more than 0";
+        return;
+    }
+
+    tasks.push({ name: name, at: Number(at), bt: Number(bt) });
+
+    document.getElementById("name").value = "";
+    document.getElementById("at").value = "";
+    document.getElementById("bt").value = "";
+
+    showTasks();
+    run(current);
+}
+
+function deleteTask(i) {
+    tasks.splice(i, 1);
+    showTasks();
+    run(current);
+}
+
+function clearAll() {
+    tasks = [];
+    document.getElementById("msg").innerText = "";
+    showTasks();
+    run(current);
+}
+
+function showTasks() {
+    var body = document.getElementById("taskBody");
+    if (tasks.length == 0) {
+        body.innerHTML = "<tr><td colspan='5'>No tasks added yet</td></tr>";
+        return;
+    }
+    var html = "";
+    for (var i = 0; i < tasks.length; i++) {
+        html += "<tr><td>T" + (i + 1) + "</td><td>" + safe(tasks[i].name) + "</td><td>" + tasks[i].at +
+            "</td><td>" + tasks[i].bt + "</td><td><button class='del' type='button' data-index='" + i + "'>X</button></td></tr>";
+    }
+    body.innerHTML = html;
+}
+
+// makes a copy of tasks so that the original list does not change
+function copyTasks() {
+    var p = [];
+    for (var i = 0; i < tasks.length; i++) {
+        p.push({ id: i + 1, name: tasks[i].name, at: tasks[i].at, bt: tasks[i].bt, ct: 0, tat: 0, wt: 0 });
+    }
+    return p;
+}
+
+function sjf(p) {
+    var n = p.length;
+    var done = [];
+    var gantt = [];
+    var time = 0, completed = 0;
+
+    while (completed < n) {
+        // find the shortest task among the ones that have arrived
+        var idx = -1;
+        for (var i = 0; i < n; i++) {
+            if (!done[i] && p[i].at <= time) {
+                if (idx == -1 || p[i].bt < p[idx].bt) {
+                    idx = i;
+                } else if (p[i].bt == p[idx].bt && p[i].at < p[idx].at) {
+                    idx = i;   // same burst time -> one that came first
+                }
+            }
+        }
+
+        if (idx == -1) {
+            // no task has arrived yet, machine is idle till next arrival
+            var next = 9999;
+            for (var i = 0; i < n; i++) {
+                if (!done[i] && p[i].at < next) next = p[i].at;
+            }
+            gantt.push({ label: "IDLE", start: time, end: next });
+            time = next;
+        } else {
+            gantt.push({ label: "T" + p[idx].id, id: p[idx].id, start: time, end: time + p[idx].bt });
+            time = time + p[idx].bt;
+            p[idx].ct = time;
+            done[idx] = true;
+            completed++;
+        }
+    }
+    return gantt;
+}
+
+function fcfs(p) {
+    var n = p.length;
+    var done = [];
+    var gantt = [];
+    var time = 0, completed = 0;
+
+    while (completed < n) {
+        // pick the task that arrived first
+        var idx = -1;
+        for (var i = 0; i < n; i++) {
+            if (!done[i] && (idx == -1 || p[i].at < p[idx].at)) idx = i;
+        }
+
+        if (p[idx].at > time) {
+            gantt.push({ label: "IDLE", start: time, end: p[idx].at });
+            time = p[idx].at;
+        }
+        gantt.push({ label: "T" + p[idx].id, id: p[idx].id, start: time, end: time + p[idx].bt });
+        time = time + p[idx].bt;
+        p[idx].ct = time;
+        done[idx] = true;
+        completed++;
+    }
+    return gantt;
+}
+
+function calculate(p) {
+    for (var i = 0; i < p.length; i++) {
+        p[i].tat = p[i].ct - p[i].at;
+        p[i].wt = p[i].tat - p[i].bt;
+    }
+}
+
+function avgWT(p) {
+    var sum = 0;
+    for (var i = 0; i < p.length; i++) sum += p[i].wt;
+    return sum / p.length;
+}
+
+function avgTAT(p) {
+    var sum = 0;
+    for (var i = 0; i < p.length; i++) sum += p[i].tat;
+    return sum / p.length;
+}
+
+function showGantt(gantt) {
+    var total = gantt[gantt.length - 1].end;
+    var html = "";
+    for (var i = 0; i < gantt.length; i++) {
+        var g = gantt[i];
+        var width = (g.end - g.start) / total * 100;
+        var color = g.label == "IDLE" ? "" : "background:" + colors[(g.id - 1) % colors.length];
+        var endTime = (i == gantt.length - 1) ? "<span>" + g.end + "</span>" : "";
+        html += "<div style='width:" + width + "%'>" +
+            "<div class='g-box" + (g.label == "IDLE" ? " idle" : "") + "' style='" + color + "'>" + g.label + "</div>" +
+            "<div class='g-time'><span>" + g.start + "</span>" + endTime + "</div></div>";
+    }
+    document.getElementById("gantt").innerHTML = html;
+}
+
+function showResult(p) {
+    var html = "<table><tr><th>Task</th><th>Name</th><th>AT</th><th>BT</th><th>CT</th><th>TAT</th><th>WT</th></tr>";
+    for (var i = 0; i < p.length; i++) {
+        html += "<tr><td>T" + p[i].id + "</td><td>" + safe(p[i].name) + "</td><td>" + p[i].at + "</td><td>" + p[i].bt +
+            "</td><td>" + p[i].ct + "</td><td>" + p[i].tat + "</td><td>" + p[i].wt + "</td></tr>";
+    }
+    html += "</table>";
+    document.getElementById("result").innerHTML = html;
+    document.getElementById("avg").innerHTML =
+        "Average Waiting Time = <b>" + avgWT(p).toFixed(2) + "</b><br>" +
+        "Average Turnaround Time = <b>" + avgTAT(p).toFixed(2) + "</b>";
+}
+
+function compare() {
+    var a = copyTasks();
+    var b = copyTasks();
+    sjf(a);
+    calculate(a);
+    fcfs(b);
+    calculate(b);
+
+    var sjfWT = avgWT(a), fcfsWT = avgWT(b);
+    var html = "<table><tr><th></th><th>FCFS</th><th>SJF</th></tr>" +
+        "<tr><td>Average Waiting Time</td><td>" + fcfsWT.toFixed(2) + "</td><td>" + sjfWT.toFixed(2) + "</td></tr>" +
+        "<tr><td>Average Turnaround Time</td><td>" + avgTAT(b).toFixed(2) + "</td><td>" + avgTAT(a).toFixed(2) + "</td></tr>" +
+        "</table>";
+
+    if (sjfWT < fcfsWT) {
+        var percent = (fcfsWT - sjfWT) / fcfsWT * 100;
+        html += "<p>SJF reduced the average waiting time by <span class='good'>" + percent.toFixed(2) + "%</span></p>";
+    } else {
+        html += "<p>No improvement with SJF for these tasks</p>";
+    }
+    document.getElementById("compare").innerHTML = html;
+}
+
+function run(type) {
+    current = type;
+    document.getElementById("sjfBtn").className = (type == "sjf") ? "active" : "";
+    document.getElementById("fcfsBtn").className = (type == "fcfs") ? "active" : "";
+
+    if (tasks.length == 0) {
+        document.getElementById("output").hidden = true;
+        document.getElementById("compareBox").hidden = true;
+        return;
+    }
+    document.getElementById("output").hidden = false;
+    document.getElementById("compareBox").hidden = false;
+
+    var p = copyTasks();
+    var gantt;
+    if (type == "sjf") {
+        gantt = sjf(p);
+        document.getElementById("outTitle").innerText = "SJF Result";
+    } else {
+        gantt = fcfs(p);
+        document.getElementById("outTitle").innerText = "FCFS Result";
+    }
+    calculate(p);
+    showGantt(gantt);
+    showResult(p);
+    compare();
+}
+
+// button events
+document.getElementById("taskForm").onsubmit = function (e) {
+    e.preventDefault();
+    addTask();
+};
+document.getElementById("sampleBtn").onclick = loadSample;
+document.getElementById("clearBtn").onclick = clearAll;
+document.getElementById("sjfBtn").onclick = function () { run("sjf"); };
+document.getElementById("fcfsBtn").onclick = function () { run("fcfs"); };
+document.getElementById("taskBody").onclick = function (e) {
+    if (e.target.dataset.index !== undefined) {
+        deleteTask(Number(e.target.dataset.index));
+    }
+};
+
+// load sample tasks when page opens
+loadSample();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+
+===== SJF Scheduling - Manufacturing System =====
+1. Enter production tasks
+2. Load sample tasks
+3. Show task list
+4. Run SJF scheduling
+5. Run FCFS scheduling
+6. Compare SJF vs FCFS
+7. Exit
+Enter your choice: Sample tasks loaded
+
+Task  Name        Arrival  Processing
+T1    Cutting           0           8
+T2    Drilling          1           4
+T3    Welding           2           9
+T4    Painting          3           5
+T5    Packing           4           2
+
+===== SJF Scheduling - Manufacturing System =====
+1. Enter production tasks
+2. Load sample tasks
+3. Show task list
+4. Run SJF scheduling
+5. Run FCFS scheduling
+6. Compare SJF vs FCFS
+7. Exit
+Enter your choice: 
+----- SJF (Non Preemptive) -----
+
+Gantt Chart:
+ -----------------------------------
+|   T1 |   T5 |   T2 |   T4 |   T3 |
+ -----------------------------------
+0      8     10     14     19     28
+
+Task  Name          AT   BT   CT  TAT   WT
+------------------------------------------
+T1    Cutting        0    8    8    8    0
+T2    Drilling       1    4   14   13    9
+T3    Welding        2    9   28   26   17
+T4    Painting       3    5   19   16   11
+T5    Packing        4    2   10    6    4
+
+Average Waiting Time    = 8.20
+Average Turnaround Time = 13.80
+
+===== SJF Scheduling - Manufacturing System =====
+1. Enter production tasks
+2. Load sample tasks
+3. Show task list
+4. Run SJF scheduling
+5. Run FCFS scheduling
+6. Compare SJF vs FCFS
+7. Exit
+Enter your choice: 
+----- FCFS -----
+
+Gantt Chart:
+ -----------------------------------
+|   T1 |   T2 |   T3 |   T4 |   T5 |
+ -----------------------------------
+0      8     12     21     26     28
+
+Task  Name          AT   BT   CT  TAT   WT
+------------------------------------------
+T1    Cutting        0    8    8    8    0
+T2    Drilling       1    4   12   11    7
+T3    Welding        2    9   21   19   10
+T4    Painting       3    5   26   23   18
+T5    Packing        4    2   28   24   22
+
+Average Waiting Time    = 11.40
+Average Turnaround Time = 17.00
+
+===== SJF Scheduling - Manufacturing System =====
+1. Enter production tasks
+2. Load sample tasks
+3. Show task list
+4. Run SJF scheduling
+5. Run FCFS scheduling
+6. Compare SJF vs FCFS
+7. Exit
+Enter your choice: 
+               FCFS     SJF
+Avg WT        11.40    8.20
+Avg TAT       17.00   13.80
+
+SJF reduced the average waiting time by 28.07%
+
+===== SJF Scheduling - Manufacturing System =====
+1. Enter production tasks
+2. Load sample tasks
+3. Show task list
+4. Run SJF scheduling
+5. Run FCFS scheduling
+6. Compare SJF vs FCFS
+7. Exit
+Enter your choice: Exiting...
